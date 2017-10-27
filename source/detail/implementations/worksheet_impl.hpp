@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <detail/implementations/cell_impl.hpp>
+#include <detail/implementations/table_impl.hpp>
 #include <xlnt/workbook/named_range.hpp>
 #include <xlnt/worksheet/range.hpp>
 #include <xlnt/worksheet/range_reference.hpp>
@@ -86,6 +87,7 @@ struct worksheet_impl
         views_ = other.views_;
         column_breaks_ = other.column_breaks_;
         row_breaks_ = other.row_breaks_;
+        tables_ = other.tables_;
     }
 
     workbook *parent_;
@@ -115,6 +117,8 @@ struct worksheet_impl
 
     std::vector<column_t> column_breaks_;
     std::vector<row_t> row_breaks_;
+
+    std::vector<table_impl> tables_;
 };
 
 } // namespace detail

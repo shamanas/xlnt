@@ -45,6 +45,8 @@
 #include <xlnt/worksheet/range.hpp>
 #include <xlnt/worksheet/range_iterator.hpp>
 #include <xlnt/worksheet/range_reference.hpp>
+#include <xlnt/worksheet/table_vector.hpp>
+#include <xlnt/worksheet/table.hpp>
 #include <xlnt/worksheet/worksheet.hpp>
 
 namespace {
@@ -689,6 +691,26 @@ bool worksheet::compare(const worksheet &other, bool reference) const
     }
 
     return false;
+}
+
+table_vector worksheet::tables()
+{
+    return table_vector(*this);
+}
+
+const table_vector worksheet::tables() const
+{
+    return table_vector(*this);
+}
+
+table worksheet::table(const std::string& table_name)
+{
+    return tables()[table_name];
+}
+
+const table worksheet::table(const std::string& table_name) const
+{
+    return tables()[table_name];
 }
 
 bool worksheet::operator!=(const worksheet &other) const
