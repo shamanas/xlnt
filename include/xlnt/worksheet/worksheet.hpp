@@ -54,6 +54,10 @@ class range_iterator;
 class range_reference;
 class relationship;
 class row_properties;
+class table;
+class table_vector;
+class const_table_iterator;
+class table_iterator;
 class workbook;
 
 struct date;
@@ -412,6 +416,30 @@ public:
     /// </summary>
     std::vector<range_reference> merged_ranges() const;
 
+    // tables
+
+    /// <summary>
+    /// Returns a vector of all tables contained in the worksheet.
+    /// </summary>
+    table_vector tables();
+
+    /// <summary>
+    /// Returns a vector of all tables contained in the worksheet.
+    /// </summary>
+    const table_vector tables() const;
+
+    /// <summary>
+    /// Returns a table given its name.
+    /// Throws if the table does not exist.
+    /// </summary>
+    class table table(const std::string& table_name);
+
+    /// <summary>
+    /// Returns a table given its name.
+    /// Throws if the table does not exist.
+    /// </summary>
+    const class table table(const std::string& table_name) const;
+
     // operators
 
     /// <summary>
@@ -667,6 +695,9 @@ private:
     friend class cell;
     friend class const_range_iterator;
     friend class range_iterator;
+    friend class const_table_iterator;
+    friend class table_iterator;
+    friend class table_vector;
     friend class workbook;
     friend class detail::xlsx_consumer;
     friend class detail::xlsx_producer;
