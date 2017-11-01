@@ -87,6 +87,7 @@ struct worksheet_impl
         views_ = other.views_;
         column_breaks_ = other.column_breaks_;
         row_breaks_ = other.row_breaks_;
+        comments_ = other.comments_;
         tables_ = other.tables_;
     }
 
@@ -117,6 +118,8 @@ struct worksheet_impl
 
     std::vector<column_t> column_breaks_;
     std::vector<row_t> row_breaks_;
+
+    std::unordered_map<std::string, comment> comments_;
 
     std::vector<table_impl> tables_;
 };

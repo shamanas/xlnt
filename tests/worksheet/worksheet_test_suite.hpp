@@ -68,10 +68,14 @@ public:
         register_test(test_freeze_panes_horiz);
         register_test(test_freeze_panes_vert);
         register_test(test_freeze_panes_both);
-        register_test(test_min_column);
-        register_test(test_max_column);
-        register_test(test_min_row);
-        register_test(test_max_row);
+        register_test(test_lowest_column);
+        register_test(test_lowest_column_or_props);
+        register_test(test_highest_column);
+        register_test(test_highest_column_or_props);
+        register_test(test_lowest_row);
+        register_test(test_lowest_row_or_props);
+        register_test(test_highest_row);
+        register_test(test_highest_row_or_props);
         register_test(test_const_iterators);
         register_test(test_const_reverse_iterators);
         register_test(test_column_major_iterators);
@@ -93,6 +97,10 @@ public:
         register_test(test_get_point_pos);
         register_test(test_named_range_named_cell_reference);
         register_test(test_iteration_skip_empty);
+        register_test(test_dimensions);
+        register_test(test_view_properties_serialization);
+        register_test(test_clear_cell);
+        register_test(test_clear_row);
     }
 
     void test_new_worksheet()
@@ -499,14 +507,22 @@ public:
         xlnt_assert_equals(view.pane().y_split, 3);
     }
 
-    void test_min_column()
+    void test_lowest_column()
     {
         xlnt::workbook wb;
         auto ws = wb.active_sheet();
         xlnt_assert_equals(ws.lowest_column(), 1);
     }
 
-    void test_max_column()
+    void test_lowest_column_or_props()
+    {
+        xlnt::workbook wb;
+        auto ws = wb.active_sheet();
+        ws.column_properties("J").width = 14.3;
+        xlnt_assert_equals(ws.lowest_column_or_props(), "J");
+    }
+
+    void test_highest_column()
     {
         xlnt::workbook wb;
         auto ws = wb.active_sheet();
@@ -514,22 +530,46 @@ public:
         ws[xlnt::cell_reference("F2")].value(32);
         ws[xlnt::cell_reference("F3")].formula("=F1+F2");
         ws[xlnt::cell_reference("A4")].formula("=A1+A2+A3");
-        xlnt_assert_equals(ws.highest_column(), 6);
+        xlnt_assert_equals(ws.highest_column(), "F");
     }
 
-    void test_min_row()
+    void test_highest_column_or_props()
+    {
+        xlnt::workbook wb;
+        auto ws = wb.active_sheet();
+        ws.column_properties("J").width = 14.3;
+        xlnt_assert_equals(ws.highest_column_or_props(), "J");
+    }
+
+    void test_lowest_row()
     {
         xlnt::workbook wb;
         auto ws = wb.active_sheet();
         xlnt_assert_equals(ws.lowest_row(), 1);
     }
 
-    void test_max_row()
+    void test_lowest_row_or_props()
+    {
+        xlnt::workbook wb;
+        auto ws = wb.active_sheet();
+        ws.row_properties(11).height = 14.3;
+        xlnt_assert_equals(ws.lowest_row_or_props(), 11);
+    }
+
+    void test_highest_row()
     {
         xlnt::workbook wb;
         auto ws = wb.active_sheet();
         ws.cell("D4").value("D4");
         xlnt_assert_equals(ws.highest_row(), 4);
+    }
+
+    void test_highest_row_or_props()
+    {
+        xlnt::workbook wb;
+        auto ws = wb.active_sheet();
+        ws.row_properties(11).height = 14.3;
+        xlnt_assert_equals(ws.highest_row_or_props(), 11);
     }
 
     void test_const_iterators()
@@ -1087,5 +1127,97 @@ public:
             xlnt_assert_equals(cells[0].value<std::string>(), "A1");
             xlnt_assert_equals(cells[1].value<std::string>(), "F6");
         }
+    }
+
+    void test_dimensions()
+    {
+        xlnt::workbook workbook;
+        workbook.load(path_helper::test_file("4_every_style.xlsx"));
+
+        auto active_sheet = workbook.active_sheet();
+        auto sheet_range = active_sheet.calculate_dimension();
+
+        xlnt_assert(!sheet_range.is_single_cell());
+        xlnt_assert_equals(sheet_range.width(), 4);
+        xlnt_assert_equals(sheet_range.height(), 35);
+    }
+
+    void test_view_properties_serialization()
+    {
+        xlnt::workbook wb;
+        auto ws = wb.active_sheet();
+
+        ws.cell("A1").value("A1");
+        ws.cell("A2").value("A2");
+        ws.cell("B1").value("B1");
+        ws.cell("B2").value("B2");
+
+        xlnt_assert(!ws.has_active_cell());
+
+        ws.active_cell("B1");
+
+        xlnt_assert(ws.has_active_cell());
+        xlnt_assert_equals(ws.active_cell(), "B1");
+
+        wb.save("temp.xlsx");
+
+        xlnt::workbook wb2;
+        wb2.load("temp.xlsx");
+        auto ws2 = wb2.active_sheet();
+
+        xlnt_assert(ws2.has_active_cell());
+        xlnt_assert_equals(ws2.active_cell(), "B1");
+    }
+
+    void test_clear_cell()
+    {
+        xlnt::workbook wb;
+        wb.load(path_helper::test_file("4_every_style.xlsx"));
+
+        auto ws = wb.active_sheet();
+        auto height = ws.calculate_dimension().height();
+        auto last_row = ws.highest_row();
+
+        xlnt_assert(ws.has_cell(xlnt::cell_reference(1, last_row)));
+
+        ws.clear_cell(xlnt::cell_reference(1, last_row));
+
+        xlnt_assert(!ws.has_cell(xlnt::cell_reference(1, last_row)));
+        xlnt_assert_equals(ws.highest_row(), last_row);
+
+        wb.save("temp.xlsx");
+        
+        xlnt::workbook wb2;
+        wb2.load("temp.xlsx");
+        auto ws2 = wb2.active_sheet();
+        
+        xlnt_assert_equals(ws2.calculate_dimension().height(), height);
+        xlnt_assert(!ws2.has_cell(xlnt::cell_reference(1, last_row)));
+    }
+
+    void test_clear_row()
+    {
+        xlnt::workbook wb;
+        wb.load(path_helper::test_file("4_every_style.xlsx"));
+
+        auto ws = wb.active_sheet();
+        auto height = ws.calculate_dimension().height();
+        auto last_row = ws.highest_row();
+
+        xlnt_assert(ws.has_cell(xlnt::cell_reference(1, last_row)));
+
+        ws.clear_row(last_row);
+
+        xlnt_assert(!ws.has_cell(xlnt::cell_reference(1, last_row)));
+        xlnt_assert_equals(ws.highest_row(), last_row - 1);
+
+        wb.save("temp.xlsx");
+        
+        xlnt::workbook wb2;
+        wb2.load("temp.xlsx");
+        auto ws2 = wb2.active_sheet();
+        
+        xlnt_assert_equals(ws2.calculate_dimension().height(), height - 1);
+        xlnt_assert(!ws2.has_cell(xlnt::cell_reference(1, last_row)));
     }
 };

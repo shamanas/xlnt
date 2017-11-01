@@ -22,6 +22,7 @@
 // @author: see AUTHORS file
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 
 #include <detail/default_case.hpp>
@@ -83,7 +84,7 @@ void unhandled_case(bool error)
 namespace xlnt {
 namespace detail {
 
-bool format_condition::satisfied_by(long double number) const
+bool format_condition::satisfied_by(double number) const
 {
     switch (type)
     {
@@ -96,9 +97,9 @@ bool format_condition::satisfied_by(long double number) const
     case condition_type::less_than:
         return number < value;
     case condition_type::not_equal:
-        return std::fabs(number - value) != 0.0L;
+        return std::fabs(number - value) != 0.0;
     case condition_type::equal:
-        return std::fabs(number - value) == 0.0L;
+        return std::fabs(number - value) == 0.0;
     }
 
     default_case(false);
@@ -143,7 +144,7 @@ void number_format_parser::parse()
             {
                 if (section.has_color || section.has_condition || section.has_locale || !section.parts.empty())
                 {
-                    throw std::runtime_error("color should be the first part of a format");
+                    throw xlnt::exception("color should be the first part of a format");
                 }
 
                 section.has_color = true;
@@ -156,7 +157,7 @@ void number_format_parser::parse()
             {
                 if (section.has_locale)
                 {
-                    throw std::runtime_error("multiple locales");
+                    throw xlnt::exception("multiple locales");
                 }
 
                 section.has_locale = true;
@@ -178,7 +179,7 @@ void number_format_parser::parse()
             {
                 if (section.has_condition)
                 {
-                    throw std::runtime_error("multiple conditions");
+                    throw xlnt::exception("multiple conditions");
                 }
 
                 section.has_condition = true;
@@ -221,7 +222,7 @@ void number_format_parser::parse()
                     value = token.string.substr(1);
                 }
 
-                section.condition.value = std::stold(value);
+                section.condition.value = std::stod(value);
                 break;
             }
 
@@ -609,6 +610,11 @@ void number_format_parser::finalize()
 number_format_token number_format_parser::parse_next_token()
 {
     number_format_token token;
+    
+    auto to_lower = [](char c)
+    {
+        return static_cast<char>(std::tolower(static_cast<std::uint8_t>(c)));
+    };
 
     if (format_string_.size() <= position_)
     {
@@ -623,12 +629,12 @@ number_format_token number_format_parser::parse_next_token()
     case '[':
         if (position_ == format_string_.size())
         {
-            throw std::runtime_error("missing ]");
+            throw xlnt::exception("missing ]");
         }
 
         if (format_string_[position_] == ']')
         {
-            throw std::runtime_error("empty []");
+            throw xlnt::exception("empty []");
         }
 
         do
@@ -670,7 +676,7 @@ number_format_token number_format_parser::parse_next_token()
     case 'G':
         if (format_string_.substr(position_ - 1, 7) != "General")
         {
-            throw std::runtime_error("expected General");
+            throw xlnt::exception("expected General");
         }
 
         token.type = number_format_token::token_type::number;
@@ -714,16 +720,21 @@ number_format_token number_format_parser::parse_next_token()
         break;
 
     case 'y':
+    case 'Y':
     case 'm':
+    case 'M':
     case 'd':
+    case 'D':
     case 'h':
+    case 'H':
     case 's':
+    case 'S':
         token.type = number_format_token::token_type::datetime;
-        token.string.push_back(current_char);
+        token.string.push_back(to_lower(current_char));
 
         while (format_string_[position_] == current_char)
         {
-            token.string.push_back(current_char);
+            token.string.push_back(to_lower(current_char));
             ++position_;
         }
 
@@ -744,7 +755,7 @@ number_format_token number_format_parser::parse_next_token()
         }
         else
         {
-            throw std::runtime_error("expected AM/PM or A/P");
+            throw xlnt::exception("expected AM/PM or A/P");
         }
 
         break;
@@ -839,7 +850,7 @@ number_format_token number_format_parser::parse_next_token()
         break;
 
     default:
-        throw std::runtime_error("unexpected character");
+        throw xlnt::exception("unexpected character");
     }
 
     return token;
@@ -849,14 +860,14 @@ void number_format_parser::validate()
 {
     if (codes_.size() > 4)
     {
-        throw std::runtime_error("too many format codes");
+        throw xlnt::exception("too many format codes");
     }
 
     if (codes_.size() > 2)
     {
         if (codes_[0].has_condition && codes_[1].has_condition && codes_[2].has_condition)
         {
-            throw std::runtime_error("format should have a maximum of two codes with conditions");
+            throw xlnt::exception("format should have a maximum of two codes with conditions");
         }
     }
 }
@@ -1029,7 +1040,7 @@ std::pair<format_locale, std::string> number_format_parser::locale_from_string(c
 
     if (locale_string.empty() || locale_string.front() != '$' || hyphen_index == std::string::npos)
     {
-        throw std::runtime_error("bad locale: " + locale_string);
+        throw xlnt::exception("bad locale: " + locale_string);
     }
 
     std::pair<format_locale, std::string> result;
@@ -1043,14 +1054,14 @@ std::pair<format_locale, std::string> number_format_parser::locale_from_string(c
 
     if (country_code_string.empty())
     {
-        throw std::runtime_error("bad locale: " + locale_string);
+        throw xlnt::exception("bad locale: " + locale_string);
     }
 
     for (auto c : country_code_string)
     {
         if (!((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')))
         {
-            throw std::runtime_error("bad locale: " + locale_string);
+            throw xlnt::exception("bad locale: " + locale_string);
         }
     }
 
@@ -1065,7 +1076,7 @@ std::pair<format_locale, std::string> number_format_parser::locale_from_string(c
         }
     }
 
-    throw std::runtime_error("unknown country code: " + country_code_string);
+    throw xlnt::exception("unknown country code: " + country_code_string);
 }
 
 number_formatter::number_formatter(const std::string &format_string, xlnt::calendar calendar)
@@ -1075,7 +1086,7 @@ number_formatter::number_formatter(const std::string &format_string, xlnt::calen
     format_ = parser_.result();
 }
 
-std::string number_formatter::format_number(long double number)
+std::string number_formatter::format_number(double number)
 {
     if (format_[0].has_condition)
     {
@@ -1154,7 +1165,7 @@ std::string number_formatter::format_text(const std::string &text)
     return format_text(format_[3], text);
 }
 
-std::string number_formatter::fill_placeholders(const format_placeholders &p, long double number)
+std::string number_formatter::fill_placeholders(const format_placeholders &p, double number)
 {
     std::string result;
 
@@ -1183,7 +1194,7 @@ std::string number_formatter::fill_placeholders(const format_placeholders &p, lo
 
     if (p.thousands_scale > 0)
     {
-        number /= std::pow(1000.L, p.thousands_scale);
+        number /= std::pow(1000.0, p.thousands_scale);
     }
 
     auto integer_part = static_cast<int>(number);
@@ -1230,7 +1241,7 @@ std::string number_formatter::fill_placeholders(const format_placeholders &p, lo
     else if (p.type == format_placeholders::placeholders_type::fractional_part)
     {
         auto fractional_part = number - integer_part;
-        result = std::fabs(fractional_part) < std::numeric_limits<long double>::min()
+        result = std::fabs(fractional_part) < std::numeric_limits<double>::min()
             ? std::string(".")
             : std::to_string(fractional_part).substr(1);
 
@@ -1259,11 +1270,11 @@ std::string number_formatter::fill_placeholders(const format_placeholders &p, lo
 }
 
 std::string number_formatter::fill_scientific_placeholders(const format_placeholders &integer_part,
-    const format_placeholders &fractional_part, const format_placeholders &exponent_part, long double number)
+    const format_placeholders &fractional_part, const format_placeholders &exponent_part, double number)
 {
     std::size_t logarithm = 0;
 
-    if (number != 0.L)
+    if (number != 0.0)
     {
         logarithm = static_cast<std::size_t>(std::log10(number));
 
@@ -1273,14 +1284,14 @@ std::string number_formatter::fill_scientific_placeholders(const format_placehol
         }
     }
 
-    number /= std::pow(10.L, logarithm);
+    number /= std::pow(10.0, logarithm);
 
     auto integer = static_cast<int>(number);
     auto fraction = number - integer;
 
     std::string integer_string = std::to_string(integer);
 
-    if (number == 0.L)
+    if (number == 0.0)
     {
         integer_string = std::string(integer_part.num_zeros + integer_part.num_optionals, '0');
     }
@@ -1312,14 +1323,14 @@ std::string number_formatter::fill_scientific_placeholders(const format_placehol
 }
 
 std::string number_formatter::fill_fraction_placeholders(const format_placeholders & /*numerator*/,
-    const format_placeholders &denominator, long double number, bool /*improper*/)
+    const format_placeholders &denominator, double number, bool /*improper*/)
 {
     auto fractional_part = number - static_cast<int>(number);
     auto original_fractional_part = fractional_part;
     fractional_part *= 10;
 
-    while (std::abs(fractional_part - static_cast<int>(fractional_part)) > 0.000001L
-        && std::abs(fractional_part - static_cast<int>(fractional_part)) < 0.999999L)
+    while (std::abs(fractional_part - static_cast<int>(fractional_part)) > 0.000001
+        && std::abs(fractional_part - static_cast<int>(fractional_part)) < 0.999999)
     {
         fractional_part *= 10;
     }
@@ -1331,13 +1342,13 @@ std::string number_formatter::fill_fraction_placeholders(const format_placeholde
     auto lower = static_cast<int>(std::pow(10, denominator_digits - 1));
     auto upper = static_cast<int>(std::pow(10, denominator_digits));
     auto best_denominator = lower;
-    auto best_difference = 1000.0L;
+    auto best_difference = 1000.0;
 
     for (int i = lower; i < upper; ++i)
     {
         auto numerator_full = original_fractional_part * i;
         auto numerator_rounded = static_cast<int>(std::round(numerator_full));
-        auto difference = std::fabs(original_fractional_part - (numerator_rounded / static_cast<long double>(i)));
+        auto difference = std::fabs(original_fractional_part - (numerator_rounded / static_cast<double>(i)));
 
         if (difference < best_difference)
         {
@@ -1350,7 +1361,7 @@ std::string number_formatter::fill_fraction_placeholders(const format_placeholde
     return std::to_string(numerator_rounded) + "/" + std::to_string(best_denominator);
 }
 
-std::string number_formatter::format_number(const format_code &format, long double number)
+std::string number_formatter::format_number(const format_code &format, double number)
 {
     static const std::vector<std::string> *month_names = new std::vector<std::string>{"January", "February", "March",
         "April", "May", "June", "July", "August", "September", "October", "November", "December"};
@@ -1377,7 +1388,7 @@ std::string number_formatter::format_number(const format_code &format, long doub
 
     if (format.is_datetime)
     {
-        if (number != 0.L)
+        if (number != 0.0)
         {
             dt = xlnt::datetime::from_number(number, calendar_);
         }
@@ -1434,7 +1445,7 @@ std::string number_formatter::format_number(const format_code &format, long doub
                     auto digits = std::min(
                         static_cast<std::size_t>(6), part.placeholders.num_zeros + part.placeholders.num_optionals);
                     auto denominator = static_cast<int>(std::pow(10.0, digits));
-                    auto fractional_seconds = dt.microsecond / 1.0E6L * denominator;
+                    auto fractional_seconds = dt.microsecond / 1.0E6 * denominator;
                     fractional_seconds = std::round(fractional_seconds) / denominator;
                     result.append(fill_placeholders(part.placeholders, fractional_seconds));
                     break;
@@ -1449,7 +1460,7 @@ std::string number_formatter::format_number(const format_code &format, long doub
                 {
                     i += 2;
 
-                    if (number == 0.L)
+                    if (number == 0.0)
                     {
                         result.pop_back();
                         break;

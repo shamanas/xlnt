@@ -262,6 +262,16 @@ public:
     //TODO: finish implementing cell_iterator wrapping before uncommenting
     //const class cell_vector cells(bool skip_null = true) const;
 
+    /// <summary>
+    /// Clears memory used by the given cell.
+    /// </summary>
+    void clear_cell(const cell_reference &ref);
+
+    /// <summary>
+    /// Clears memory used by all cells in the given row.
+    /// </summary>
+    void clear_row(row_t row);
+
     // properties
 
     /// <summary>
@@ -365,9 +375,19 @@ public:
     row_t lowest_row() const;
 
     /// <summary>
+    /// Returns the row of the first non-empty cell or lowest row with properties in the worksheet.
+    /// </summary>
+    row_t lowest_row_or_props() const;
+
+    /// <summary>
     /// Returns the row of the last non-empty cell in the worksheet.
     /// </summary>
     row_t highest_row() const;
+
+    /// <summary>
+    /// Returns the row of the last non-empty cell or highest row with properties in the worksheet.
+    /// </summary>
+    row_t highest_row_or_props() const;
 
     /// <summary>
     /// Returns the row directly below the last non-empty cell in the worksheet.
@@ -380,9 +400,19 @@ public:
     column_t lowest_column() const;
 
     /// <summary>
+    /// Returns the column of the first non-empty cell or lowest column with properties in the worksheet.
+    /// </summary>
+    column_t lowest_column_or_props() const;
+
+    /// <summary>
     /// Returns the column of the last non-empty cell in the worksheet.
     /// </summary>
     column_t highest_column() const;
+
+    /// <summary>
+    /// Returns the column of the last non-empty cell or highest column with properties in the worksheet.
+    /// </summary>
+    column_t highest_column_or_props() const;
 
     /// <summary>
     /// Returns a range_reference pointing to the full range of non-empty cells in the worksheet.
@@ -658,6 +688,21 @@ public:
     /// </summary>
     void add_view(const sheet_view &new_view);
 
+    /// <summary>
+    /// Set the active cell on the default worksheet view to the given reference.
+    /// </summary>
+    void active_cell(const cell_reference &ref);
+
+    /// <summary>
+    /// Returns true if the worksheet has a view and the view has an active cell.
+    /// </summary>
+    bool has_active_cell() const;
+
+    /// <summary>
+    /// Returns the active cell on the default worksheet view.
+    /// </summary>
+    cell_reference active_cell() const;
+
     // page breaks
 
     /// <summary>
@@ -686,10 +731,10 @@ public:
     /// </summary>
     void page_break_at_column(column_t column);
 
-	/// <summary>
-	/// Creates a conditional format for the given range with the given condition.
-	/// </summary>
-	xlnt::conditional_format conditional_format(const range_reference &ref, const condition &when);
+    /// <summary>
+    /// Creates a conditional format for the given range with the given condition.
+    /// </summary>
+    xlnt::conditional_format conditional_format(const range_reference &ref, const condition &when);
 
 private:
     friend class cell;
@@ -721,7 +766,7 @@ private:
     /// Removes calcChain part from manifest if no formulae remain in workbook.
     /// </summary>
     void garbage_collect_formulae();
-    
+
     /// <summary>
     /// Sets the parent of this worksheet to wb.
     /// </summary>

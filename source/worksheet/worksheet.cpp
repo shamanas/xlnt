@@ -352,24 +352,67 @@ void worksheet::unfreeze_panes()
     primary_view.clear_pane();
 }
 
-cell worksheet::cell(const cell_reference &reference)
+void worksheet::active_cell(const cell_reference &ref)
 {
-    if (d_->cell_map_.find(reference.row()) == d_->cell_map_.end())
+    if (!has_view())
     {
-        d_->cell_map_[reference.row()] = std::unordered_map<column_t, detail::cell_impl>();
+        d_->views_.push_back(sheet_view());
     }
 
-    auto &row = d_->cell_map_[reference.row()];
+    auto &primary_view = d_->views_.front();
 
-    if (row.find(reference.column_index()) == row.end())
+    if (!primary_view.has_selections())
     {
-        auto &impl = row[reference.column_index()] = detail::cell_impl();
+        primary_view.add_selection(selection());
+    }
+
+    auto &primary_selection = primary_view.selection(0);
+    primary_selection.active_cell(ref);
+}
+
+bool worksheet::has_active_cell() const
+{
+    if (!has_view()) return false;
+    auto &primary_view = d_->views_.front();
+    if (!primary_view.has_selections()) return false;
+    auto primary_selection = primary_view.selection(0);
+
+    return primary_selection.has_active_cell();
+}
+
+cell_reference worksheet::active_cell() const
+{
+    if (!has_view())
+    {
+        throw xlnt::exception("Worksheet has no view.");
+    }
+
+    auto &primary_view = d_->views_.front();
+
+    if (!primary_view.has_selections())
+    {
+        throw xlnt::exception("Default worksheet view has no selections.");
+    }
+
+    return primary_view.selection(0).active_cell();
+}
+
+cell worksheet::cell(const cell_reference &reference)
+{
+    auto &row = d_->cell_map_[reference.row()];
+    auto match = row.find(reference.column_index());
+
+    if (match == row.end())
+    {
+        match = row.emplace(reference.column_index(), detail::cell_impl()).first;
+        auto &impl = match->second;
+
         impl.parent_ = d_;
         impl.column_ = reference.column_index();
         impl.row_ = reference.row();
     }
 
-    return xlnt::cell(&row[reference.column_index()]);
+    return xlnt::cell(&match->second);
 }
 
 const cell worksheet::cell(const cell_reference &reference) const
@@ -440,7 +483,7 @@ column_t worksheet::lowest_column() const
         return constants::min_column();
     }
 
-    column_t lowest = constants::max_column();
+    auto lowest = constants::max_column();
 
     for (auto &row : d_->cell_map_)
     {
@@ -453,6 +496,23 @@ column_t worksheet::lowest_column() const
     return lowest;
 }
 
+column_t worksheet::lowest_column_or_props() const
+{
+    auto lowest = lowest_column();
+
+    if (d_->cell_map_.empty() && !d_->column_properties_.empty())
+    {
+        lowest = d_->column_properties_.begin()->first;
+    }
+
+    for (auto &props : d_->column_properties_)
+    {
+        lowest = std::min(lowest, props.first);
+    }
+
+    return lowest;
+}
+
 row_t worksheet::lowest_row() const
 {
     if (d_->cell_map_.empty())
@@ -460,7 +520,7 @@ row_t worksheet::lowest_row() const
         return constants::min_row();
     }
 
-    row_t lowest = constants::max_row();
+    auto lowest = constants::max_row();
 
     for (auto &row : d_->cell_map_)
     {
@@ -470,9 +530,26 @@ row_t worksheet::lowest_row() const
     return lowest;
 }
 
+row_t worksheet::lowest_row_or_props() const
+{
+    auto lowest = lowest_row();
+
+    if (d_->cell_map_.empty() && !d_->row_properties_.empty())
+    {
+        lowest = d_->row_properties_.begin()->first;
+    }
+
+    for (auto &props : d_->row_properties_)
+    {
+        lowest = std::min(lowest, props.first);
+    }
+
+    return lowest;
+}
+
 row_t worksheet::highest_row() const
 {
-    row_t highest = constants::min_row();
+    auto highest = constants::min_row();
 
     for (auto &row : d_->cell_map_)
     {
@@ -482,9 +559,26 @@ row_t worksheet::highest_row() const
     return highest;
 }
 
+row_t worksheet::highest_row_or_props() const
+{
+    auto highest = highest_row();
+
+    if (d_->cell_map_.empty() && !d_->row_properties_.empty())
+    {
+        highest = d_->row_properties_.begin()->first;
+    }
+
+    for (auto &props : d_->row_properties_)
+    {
+        highest = std::max(highest, props.first);
+    }
+
+    return highest;
+}
+
 column_t worksheet::highest_column() const
 {
-    column_t highest = constants::min_column();
+    auto highest = constants::min_column();
 
     for (auto &row : d_->cell_map_)
     {
@@ -492,6 +586,23 @@ column_t worksheet::highest_column() const
         {
             highest = std::max(highest, c.first);
         }
+    }
+
+    return highest;
+}
+
+column_t worksheet::highest_column_or_props() const
+{
+    auto highest = highest_column();
+
+    if (d_->cell_map_.empty() && !d_->column_properties_.empty())
+    {
+        highest = d_->column_properties_.begin()->first;
+    }
+
+    for (auto &props : d_->column_properties_)
+    {
+        highest = std::max(highest, props.first);
     }
 
     return highest;
@@ -638,6 +749,18 @@ const cell_vector worksheet::cells(bool skip_null) const
 }
 */
 
+void worksheet::clear_cell(const cell_reference &ref)
+{
+    d_->cell_map_.at(ref.row()).erase(ref.column());
+    // TODO: garbage collect newly unreferenced resources such as styles?
+}
+
+void worksheet::clear_row(row_t row)
+{
+    d_->cell_map_.erase(row);
+    // TODO: garbage collect newly unreferenced resources such as styles?
+}
+
 bool worksheet::operator==(const worksheet &other) const
 {
     return compare(other, true);
@@ -675,7 +798,7 @@ bool worksheet::compare(const worksheet &other, bool reference) const
             }
 
             if (this_cell.data_type() == xlnt::cell::type::number
-                && std::fabs(this_cell.value<long double>() - other_cell.value<long double>()) > 0.L)
+                && std::fabs(this_cell.value<double>() - other_cell.value<double>()) > 0.0)
             {
                 return false;
             }
