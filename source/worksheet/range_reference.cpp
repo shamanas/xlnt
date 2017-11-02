@@ -103,6 +103,45 @@ bool range_reference::is_single_cell() const
     return width() == 1 && height() == 1;
 }
 
+bool range_reference::contains(const range_reference& other) const
+{
+    return top_left_.row() <= other.top_left_.row()             &&
+           top_left_.column() <= other.top_left_.column()       &&
+           bottom_right_.row() >= other.bottom_right_.row()     &&
+           bottom_right_.column() >= other.bottom_right_.column();
+}
+
+bool range_reference::overlaps_with(const range_reference& other) const
+{
+    return (bottom_right_.column() >= other.top_left_.column()
+            || other.bottom_right_.column() >= top_left_.column()) &&
+           (bottom_right_.row() >= other.top_left_.row()
+            || other.bottom_right_.row() >= top_left_.row()); 
+}
+
+optional<range_reference> range_reference::overlap(const range_reference& other) const
+{
+    if (!overlaps_with(other))
+    {
+        return {};
+    }
+
+    auto max = [](auto left, auto right) {
+        return left >= right ? left : right;
+    };
+
+    auto min = [](auto left, auto right) {
+        return left <= right ? left : right;
+    };
+
+    cell_reference top_left { max(top_left_.column(), other.top_left_.column()),
+                              max(top_left_.row(), other.top_left_.row()) };
+
+    cell_reference bottom_right { min(bottom_right_.column(), other.bottom_right_.column()),
+                                  min(bottom_right_.row(), other.bottom_right_.row()) };
+    return optional<range_reference>({ top_left, bottom_right });
+}
+
 std::string range_reference::to_string() const
 {
     return top_left_.to_string() + ":" + bottom_right_.to_string();

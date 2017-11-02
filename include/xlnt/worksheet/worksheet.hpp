@@ -743,6 +743,7 @@ private:
     friend class const_table_iterator;
     friend class table_iterator;
     friend class table_vector;
+    friend class table;
     friend class workbook;
     friend class detail::xlsx_consumer;
     friend class detail::xlsx_producer;

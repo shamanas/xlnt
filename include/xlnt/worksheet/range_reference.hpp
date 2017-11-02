@@ -25,6 +25,7 @@
 
 #include <xlnt/xlnt_config.hpp>
 #include <xlnt/cell/cell_reference.hpp>
+#include <xlnt/utils/optional.hpp>
 
 namespace xlnt {
 
@@ -78,6 +79,21 @@ public:
     /// Returns true if the range has a width and height of 1 cell.
     /// </summary>
     bool is_single_cell() const;
+
+    /// <summary>
+    /// Returns true if this range contains the entirety of range other.
+    /// </summary>
+    bool contains(const range_reference& other) const;
+
+    /// <summary>
+    /// Returns true if this range and range other have some overlap.
+    /// </summary>
+    bool overlaps_with(const range_reference& other) const;
+
+    /// <summary>
+    /// Returns the overlap between this range and range other, if any.
+    /// </summary>
+    optional<range_reference> overlap(const range_reference& other) const;
 
     /// <summary>
     /// Returns the number of columns encompassed by this range.

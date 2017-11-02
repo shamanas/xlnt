@@ -84,6 +84,9 @@
 #include <xlnt/worksheet/range.hpp>
 #include <xlnt/worksheet/range_iterator.hpp>
 #include <xlnt/worksheet/range_reference.hpp>
+#include <xlnt/worksheet/table.hpp>
+#include <xlnt/worksheet/table_iterator.hpp>
+#include <xlnt/worksheet/table_vector.hpp>
 #include <xlnt/worksheet/row_properties.hpp>
 #include <xlnt/worksheet/selection.hpp>
 #include <xlnt/worksheet/sheet_protection.hpp>

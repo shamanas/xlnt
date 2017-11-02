@@ -35,6 +35,7 @@ class xlsx_producer;
 class const_table_iterator;
 class table_iterator;
 class table_vector;
+class range;
 
 namespace detail {
 
@@ -61,6 +62,18 @@ public:
     /// Returns the name of this table.
     /// </summary>
     std::string name() const;
+
+    /// <summary>
+    /// Returns the range referenced by this table.
+    /// Column names are excluded or included based on the exlude_header_row flag.
+    /// </summary>
+    class range range(bool exclude_header_row = true);
+
+    /// <summary>
+    /// Returns the range referenced by this table.
+    /// Column names are excluded or included based on the exlude_header_row flag.
+    /// </summary>
+    const class range range(bool exclude_header_row = true) const;
 
     /// <summary>
     /// Modifies the name of this table.

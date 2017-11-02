@@ -24,6 +24,8 @@
 
 #include <string>
 
+#include <xlnt/worksheet/range_reference.hpp>
+
 namespace xlnt {
 namespace detail {
 
@@ -31,12 +33,13 @@ struct worksheet_impl;
 
 struct table_impl
 {
-    table_impl(const std::string& name);
+    table_impl(const std::string& name, const range_reference& ref);
 
     worksheet_impl *parent_;
 
     // TODO: EVERYTHING ELSE
     std::string name_;
+    range_reference ref_;
 };
 
 } // namespace detail

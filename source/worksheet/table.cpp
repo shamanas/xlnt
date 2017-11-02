@@ -25,6 +25,7 @@
 #include <detail/implementations/table_impl.hpp>
 #include <xlnt/worksheet/table.hpp>
 #include <xlnt/worksheet/worksheet.hpp>
+#include <xlnt/worksheet/range.hpp>
 
 namespace xlnt {
 
@@ -36,6 +37,28 @@ table::table(detail::table_impl *d)
 std::string table::name() const
 {
     return d_->name_;
+}
+
+range table::range(bool exclude_header_row)
+{
+    worksheet ws { d_->parent_ };
+    if (exclude_header_row)
+    {
+        return ws.range(d_->ref_.make_offset(0, 1));
+    }
+
+    return ws.range(d_->ref_);
+}
+
+const range table::range(bool exclude_header_row) const
+{
+    worksheet ws { d_->parent_ };
+    if (exclude_header_row)
+    {
+        return ws.range(d_->ref_.make_offset(0, 1));
+    }
+
+    return ws.range(d_->ref_);
 }
 
 void table::rename(const std::string& new_name)

@@ -28,9 +28,10 @@
 namespace xlnt {
 namespace detail {
 
-table_impl::table_impl(const std::string& name)
+table_impl::table_impl(const std::string& name, const range_reference& ref)
     : parent_(nullptr),
-      name_(name)
+      name_(name),
+      ref_(ref)
 {
 }
 
