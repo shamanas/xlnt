@@ -25,6 +25,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <xlnt/xlnt_config.hpp>
 
@@ -74,6 +75,16 @@ public:
     /// Column names are excluded or included based on the exlude_header_row flag.
     /// </summary>
     const class range range(bool exclude_header_row = true) const;
+
+    /// <summary>
+    /// Returns the number of columns this table has.
+    /// </summary>
+    std::size_t column_length() const;
+
+    /// <summary>
+    /// Returns a constant reference to the vector of the column names of this table.
+    /// </summary>
+    const std::vector<std::string>& columns() const;
 
     /// <summary>
     /// Modifies the name of this table.

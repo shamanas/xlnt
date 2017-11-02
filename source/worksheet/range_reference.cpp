@@ -111,12 +111,20 @@ bool range_reference::contains(const range_reference& other) const
            bottom_right_.column() >= other.bottom_right_.column();
 }
 
+bool range_reference::contains(const cell_reference& c) const
+{
+    return c.column() >= top_left_.column()     &&
+           c.column() <= bottom_right_.column() &&
+           c.row() >= top_left_.row()           &&
+           c.row() <= bottom_right_.row();
+}
+
 bool range_reference::overlaps_with(const range_reference& other) const
 {
-    return (bottom_right_.column() >= other.top_left_.column()
-            || other.bottom_right_.column() >= top_left_.column()) &&
-           (bottom_right_.row() >= other.top_left_.row()
-            || other.bottom_right_.row() >= top_left_.row()); 
+    return bottom_right_.row() >= other.top_left_.row() &&
+           top_left_.row() <= other.bottom_right_.row() &&
+           bottom_right_.column() >= other.top_left_.column() &&
+           top_left_.column() <= other.bottom_right_.column();
 }
 
 optional<range_reference> range_reference::overlap(const range_reference& other) const

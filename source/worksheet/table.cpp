@@ -44,7 +44,7 @@ range table::range(bool exclude_header_row)
     worksheet ws { d_->parent_ };
     if (exclude_header_row)
     {
-        return ws.range(d_->ref_.make_offset(0, 1));
+        return ws.range({ d_->ref_.top_left().make_offset(0, 1), d_->ref_.bottom_right() });
     }
 
     return ws.range(d_->ref_);
@@ -55,10 +55,20 @@ const range table::range(bool exclude_header_row) const
     worksheet ws { d_->parent_ };
     if (exclude_header_row)
     {
-        return ws.range(d_->ref_.make_offset(0, 1));
+        return ws.range({ d_->ref_.top_left().make_offset(0, 1), d_->ref_.bottom_right() });
     }
 
     return ws.range(d_->ref_);
+}
+
+std::size_t table::column_length() const
+{
+    return d_->column_names_.size();
+}
+
+const std::vector<std::string>& table::columns() const
+{
+    return d_->column_names_;
 }
 
 void table::rename(const std::string& new_name)

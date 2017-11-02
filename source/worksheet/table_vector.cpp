@@ -94,13 +94,19 @@ table table_vector::add(const std::string& name, std::initializer_list<std::stri
 
 table table_vector::add(const std::string& name, const std::vector<std::string>& column_names, const cell_reference& top_left, std::uint32_t rows)
 {
-    return add(name, std::move(column_names), top_left, rows);
+    std::vector<std::string> names(column_names);
+    return add(name, std::move(names), top_left, rows);
 }
 
 table table_vector::add(const std::string& name, std::vector<std::string>&& column_names, const cell_reference& top_left, std::uint32_t rows)
 {
+    if (column_names.empty())
+    {
+        throw invalid_parameter();
+    }
+
     // Check for overlap with existing tables.
-    range_reference area { top_left, top_left.make_offset(column_names.size(), rows) };
+    range_reference area { top_left, top_left.make_offset(column_names.size() - 1, rows) };
 
     for (const auto& tbl : ws_.d_->tables_)
     {

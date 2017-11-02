@@ -86,6 +86,11 @@ public:
     bool contains(const range_reference& other) const;
 
     /// <summary>
+    /// Returns true if the cell referenced is contained in this range.
+    /// </summary>
+    bool contains(const cell_reference& c) const;
+
+    /// <summary>
     /// Returns true if this range and range other have some overlap.
     /// </summary>
     bool overlaps_with(const range_reference& other) const;
