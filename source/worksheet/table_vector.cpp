@@ -100,7 +100,7 @@ table table_vector::add(const std::string& name, const std::vector<std::string>&
 
 table table_vector::add(const std::string& name, std::vector<std::string>&& column_names, const cell_reference& top_left, std::uint32_t rows)
 {
-    if (column_names.empty())
+    if (column_names.empty() || rows == 0)
     {
         throw invalid_parameter();
     }

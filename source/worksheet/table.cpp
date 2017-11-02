@@ -23,9 +23,11 @@
 // @author: see AUTHORS file
 
 #include <detail/implementations/table_impl.hpp>
+#include <detail/implementations/worksheet_impl.hpp>
 #include <xlnt/worksheet/table.hpp>
 #include <xlnt/worksheet/worksheet.hpp>
 #include <xlnt/worksheet/range.hpp>
+#include <xlnt/utils/exceptions.hpp>
 
 namespace xlnt {
 
@@ -73,6 +75,16 @@ const std::vector<std::string>& table::columns() const
 
 void table::rename(const std::string& new_name)
 {
+    const auto& table_vec = d_->parent_->tables_;
+    auto it = std::find_if(table_vec.cbegin(), table_vec.cend(), [&new_name](const auto& table) {
+        return table.name_ == new_name;
+    });
+
+    if (it != table_vec.cend())
+    {
+        throw invalid_parameter();
+    }
+
     d_->name_ = new_name;
 }
 
