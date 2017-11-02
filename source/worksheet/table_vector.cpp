@@ -86,6 +86,43 @@ std::size_t table_vector::length() const
     return ws_.d_->tables_.size();
 }
 
+table table_vector::add(const std::string& name, std::initializer_list<std::string> column_names, const cell_reference& top_left, std::uint32_t rows)
+{
+    std::vector<std::string> names(column_names);
+    return add(name, std::move(names), top_left, rows);
+}
+
+table table_vector::add(const std::string& name, const std::vector<std::string>& column_names, const cell_reference& top_left, std::uint32_t rows)
+{
+    return add(name, std::move(column_names), top_left, rows);
+}
+
+table table_vector::add(const std::string& name, std::vector<std::string>&& column_names, const cell_reference& top_left, std::uint32_t rows)
+{
+    // Check for overlap with existing tables.
+    range_reference area { top_left, top_left.make_offset(column_names.size(), rows) };
+
+    for (const auto& tbl : ws_.d_->tables_)
+    {
+        if (tbl.ref_.overlaps_with(area))
+        {
+            throw overlapping_table_ranges(tbl.name_);
+        }
+        else if (tbl.name_ == name)
+        {
+            throw invalid_parameter();
+        }
+    }
+
+    ws_.d_->tables_.emplace_back(name, area);
+    auto& new_table = ws_.d_->tables_.back();
+
+    new_table.parent_ = ws_.d_;
+    new_table.column_names_ = std::move(column_names);
+
+    return { &new_table };
+}
+
 table_vector::const_iterator table_vector::begin() const
 {
     return cbegin();

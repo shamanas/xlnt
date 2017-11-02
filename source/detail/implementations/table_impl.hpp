@@ -23,6 +23,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <xlnt/worksheet/range_reference.hpp>
 
@@ -37,9 +38,10 @@ struct table_impl
 
     worksheet_impl *parent_;
 
-    // TODO: EVERYTHING ELSE
+    // TODO: Filters
     std::string name_;
     range_reference ref_;
+    std::vector<std::string> column_names_;
 };
 
 } // namespace detail

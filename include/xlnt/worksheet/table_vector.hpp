@@ -99,6 +99,21 @@ public:
     std::size_t length() const;
 
     /// <summary>
+    /// Creates a new table with the given attributes, returns a reference to it.
+    /// </summary>
+    table add(const std::string& name, std::initializer_list<std::string> column_names, const cell_reference& top_left, std::uint32_t rows);
+
+    /// <summary>
+    /// Creates a new table with the given attributes, returns a reference to it.
+    /// </summary>
+    table add(const std::string& name, std::vector<std::string>&& column_names, const cell_reference& top_left, std::uint32_t rows);
+
+    /// <summary>
+    /// Creates a new table with the given attributes, returns a reference to it.
+    /// </summary>
+    table add(const std::string& name, const std::vector<std::string>& column_names, const cell_reference& top_left, std::uint32_t rows);
+
+    /// <summary>
     /// Returns an iterator to the first table in this vector.
     /// </summary>
     iterator begin();

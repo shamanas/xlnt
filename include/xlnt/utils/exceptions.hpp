@@ -339,6 +339,28 @@ public:
 };
 
 /// <summary>
+/// Exception for a adding a table with a range that overlaps with an existing table.
+/// </summary>
+class XLNT_API overlapping_table_ranges : public exception
+{
+public:
+    /// <summary>
+    /// Constructs the exception given the name of the existing range which overlaps the new table's range.
+    /// </summary>
+    overlapping_table_ranges(const std::string& existing_name);
+
+    /// <summary>
+    /// Default copy constructor.
+    /// </summary>
+    overlapping_table_ranges(const overlapping_table_ranges &) = default;
+
+    /// <summary>
+    /// Destructor
+    /// </summary>
+    virtual ~overlapping_table_ranges();
+};
+
+/// <summary>
 /// Exception for attempting to use a feature which is not supported
 /// </summary>
 class XLNT_API unsupported : public exception

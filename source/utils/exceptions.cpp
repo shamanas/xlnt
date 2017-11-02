@@ -150,6 +150,15 @@ no_visible_worksheets::~no_visible_worksheets()
 {
 }
 
+overlapping_table_ranges::overlapping_table_ranges(const std::string& existing_name)
+    : exception(std::string("new table's range overlaps with existing table's (") + existing_name + ") range.")
+{
+}
+
+overlapping_table_ranges::~overlapping_table_ranges()
+{
+}
+
 unsupported::unsupported(const std::string &message)
     : exception(message)
 {
